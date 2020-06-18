@@ -5,8 +5,8 @@
     "fileDir": "./files/",
     "iplist": {
         "poolingInterval": 60000,
-        "allowTimeout": 86400,
-        "denyTimeout": 3600,
+        "allowTimeout": 86400000,
+        "denyTimeout": 3600000,
         "allow": [
             "127.0.0.1"
         ],

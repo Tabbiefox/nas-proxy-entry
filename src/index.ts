@@ -20,42 +20,20 @@ export async function init() {
         // Start IP List service
         const iplist = App.getServices().iplist;
 
-        // Try to load IP list state file
-        let list: IPListItem[] = [];
-        let listPath = config.fileDir + 'iplist.json';
-        if (fs.existsSync(listPath))
-        {
-            fs.readFile(listPath, (err, data) => {
-                if (data.length > 0)
-                    list = JSON.parse(data.toString());
-            });
-        }
-
-        // Start IP list with the loaded data
-        iplist.start(list);
-        let currentTime = new Date();
-        console.log(
-            '(' + currentTime.toUTCString() + ') ' +
-            'Started IP list service with data', list
-        );
-
         // Hook a logger to the IP list change observable
         iplist.getListChange().subscribe((list) => {
-            let currentTime = new Date();
             console.log(
-                '(' + currentTime.toUTCString() + ') ' +
-                'IP List Changed: ' +
-                JSON.stringify(list));
+                '(' + new Date().toUTCString() + ') ' +
+                'IP List Changed: ', list
+            );
         });
 
-/*
         // Hook a state file writer to the IP list change observable
         iplist.getListChange().pipe(debounceTime(1000)).subscribe((list) => {
             fs.writeFile(listPath, Buffer.from(JSON.stringify(list)), (err) => {
                 if (err) {
-                    let currentTime = new Date();
                     console.log(
-                        '(' + currentTime.toUTCString() + ') ' +
+                        '(' + new Date().toUTCString() + ') ' +
                         'Error saving state to \'' + listPath + '\'', err
                     );
                 }
@@ -69,15 +47,36 @@ export async function init() {
                 return ((x.allow) ? 'allow ' : 'deny ') + x.ip + ";\n";
             }), (err) => {
                 if (err) {
-                    let currentTime = new Date();
                     console.log(
-                        '(' + currentTime.toUTCString() + ') ' +
+                        '(' + new Date().toUTCString() + ') ' +
                         'Error saving NGINX conf file to \'' + nginxPath + '\'', err
                     );
                 }
             });
         });
-*/
+
+        // Try to load IP list state file
+        let list: IPListItem[] = [];
+        let listPath = config.fileDir + 'iplist.json';
+        if (fs.existsSync(listPath))
+        {
+            try {
+                let data = fs.readFileSync(listPath);
+                if (data.length > 0) {
+                    list = JSON.parse(data.toString());
+                }
+            }
+            catch (err) {
+            }
+        }
+
+        // Start IP list with the loaded data
+        console.log(
+            '(' + new Date().toUTCString() + ') ' +
+            'Starting IP list service with data', list
+        );
+        iplist.start(list);
+
         // Start web server
         server.listen(Number(config.port) || 8080, config.host || 'localhost');
     }

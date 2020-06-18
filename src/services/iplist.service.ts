@@ -47,6 +47,7 @@ export class IPListService {
      */
     public start(list?: IPListItem[]): IPListService {
         this.loadList(list || []);
+        this.commit();
         this.setPooling();
 
         return this;
@@ -61,24 +62,12 @@ export class IPListService {
     }
 
     /**
-     * Get IP list change subject as observable
-     *
-     * @returns IP list change observable
-     */
-    public getListChange() {
-        return this.listChangeSubject
-            .asObservable()
-            .pipe(distinctUntilChanged((a, b) => { return equals(a, b); }));
-    }
-
-    /**
      * Load list of IP addresses provided in the parameter list
      *
      * @param list list of IP addresses to load
      */
     public loadList(list: IPListItem[]) {
         this.list = list.map(x => { x.listedDate = new Date(x.listedDate); return x });
-        this.checkList();
     }
 
     /**
@@ -86,14 +75,13 @@ export class IPListService {
      */
     public clearList() {
         this.list = [];
-        this.checkList();
     }
 
     /**
      *
      */
-    public addIP(ip: string, allow: boolean) {
-        if (!this.isIPListed(ip, allow)) {
+    public add(ip: string, allow: boolean) {
+        if (!this.has(ip, allow)) {
             let listItem = new IPListItem();
             listItem.ip = ip;
             listItem.listedDate = new Date();
@@ -105,14 +93,31 @@ export class IPListService {
     /**
      *
      */
-    public removeIP(ip: string, allow: boolean) {
+    public remove(ip: string, allow: boolean) {
 
     }
 
     /**
      *
      */
-    public isIPListed(ip: string, allow: boolean): boolean {
+    public commit() {
+        this.check();
+    }
+
+    /**
+     * Get IP list change subject as observable
+     *
+     * @returns IP list change observable
+     */
+    public getListChange() {
+        return this.listChangeSubject
+            .pipe(distinctUntilChanged((a, b) => equals(a, b)));
+    }
+
+    /**
+     *
+     */
+    public has(ip: string, allow: boolean): boolean {
         return (!!this.list.find(x => x.ip == ip && x.allow == allow));
     }
 
@@ -132,21 +137,22 @@ export class IPListService {
     }
 
     /**
-     * Check integrity of loaded IP list
+     * Clean invalid items, ensure presence of mandatory items and emit changes
      */
-    private checkList() {
+    private check() {
+        // remove invalid items
         this.list = this.list.filter(x => this.isItemValid(x));
 
         // check and add defaults
         for (let ip of this.config.allow) {
-            this.addIP(ip, true);
+            this.add(ip, true);
         }
         for (let ip of this.config.deny) {
-            this.addIP(ip, false);
+            this.add(ip, false);
         }
 
         // emit current list
-        this.listChangeSubject.next(Object.assign({}, this.list));
+        this.listChangeSubject.next(Array.from(this.list));
     }
 
     /**
@@ -155,7 +161,7 @@ export class IPListService {
     private setPooling() {
         if (this.config.poolingInterval) {
             this.pooling = setTimeout(() => {
-                this.checkList()
+                this.check()
                 this.setPooling();
             }, this.config.poolingInterval);
         }
