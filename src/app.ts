@@ -58,6 +58,7 @@ export function getProviders(): IAppProviders {
  */
 export function initServer(config: IConfig): express.Express {
     const server = express();
+    server.use(express.static('wwwroot'));
     return server;
 }
 
