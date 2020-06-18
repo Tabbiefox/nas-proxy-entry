@@ -43,9 +43,7 @@ export async function init() {
         // Hook a NGINX conf writer to the IP list change observable
         let nginxPath = config.fileDir + 'nginx.conf';
         iplist.getListChange().pipe(debounceTime(1000)).subscribe((list) => {
-            fs.writeFile(nginxPath, list.map(x => {
-                return ((x.allow) ? 'allow ' : 'deny ') + x.ip + ";\n";
-            }), (err) => {
+            fs.writeFile(nginxPath, list.map(x => ((x.allow) ? 'allow ' : 'deny ') + x.ip + ';').join("\n"), (err) => {
                 if (err) {
                     console.log(
                         '(' + new Date().toUTCString() + ') ' +
