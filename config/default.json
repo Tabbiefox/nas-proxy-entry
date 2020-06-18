@@ -1,0 +1,15 @@
+{
+    "conf": "default",
+    "host": "localhost",
+    "port": 35080,
+    "fileDir": "./files/",
+    "iplist": {
+        "poolingInterval": 60000,
+        "allowTimeout": 86400,
+        "denyTimeout": 3600,
+        "allow": [
+            "127.0.0.1"
+        ],
+        "deny": []
+    }
+}
