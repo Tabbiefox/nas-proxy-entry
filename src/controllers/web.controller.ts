@@ -6,14 +6,15 @@ import { IPListItem } from '../models';
 
 export function index(req: Request, res: Response, next: NextFunction) {
     const iplist = getServices().iplist;
-    if (req.connection.remoteAddress) {
-        if (iplist.has(req.connection.remoteAddress, true)) {
-            res.send('Address ' + req.connection.remoteAddress + ' already exists in whitelist');
+    var ip = (<string>req.headers['x-forwarded-for'] || req.connection.remoteAddress);
+    if (ip) {
+        if (iplist.has(ip, true)) {
+            res.send('Address ' + ip + ' already exists in whitelist');
         }
         else {
-            iplist.add(req.connection.remoteAddress, true);
+            iplist.add(ip, true);
             iplist.commit();
-            res.send('Added ' + req.connection.remoteAddress + ' to whitelist');
+            res.send('Added ' + ip + ' to whitelist');
         }
     }
     else {
